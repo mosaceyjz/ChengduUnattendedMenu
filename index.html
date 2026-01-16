@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chengdu Plant Unattended Operation Success Menu</title>
+    <style>
+        /* --- 基础样式 --- */
+        :root {
+            --primary-color: #004BC4; /* P&G Blue */
+            --secondary-color: #002a6e;
+            --accent-color: #00c8fa;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333;
+            --text-light: #666;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 40px;
+            color: var(--text-main);
+        }
+
+        /* --- Header & Logo --- */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .site-logo {
+            max-height: 120px;
+            margin-bottom: 20px;
+            object-fit: contain;
+            /* 简单的入场动画 */
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 { 
+            color: var(--primary-color); 
+            margin: 0 0 10px 0; 
+            font-size: 2.2em; 
+            font-weight: 700;
+        }
+        
+        .subtitle { color: var(--text-light); font-size: 1.1em; max-width: 800px; line-height: 1.5; }
+
+        /* --- ✨ 新增：Dashboard 仪表盘样式 --- */
+        .dashboard-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            margin: 0 auto 60px auto;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+            border-radius: 12px;
+            padding: 20px 30px;
+            min-width: 200px;
+            box-shadow: 0 8px 15px rgba(0, 75, 196, 0.08);
+            border-left: 5px solid var(--primary-color);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover { transform: translateY(-5px); }
+        
+        .stat-value {
+            display: block;
+            font-size: 2.2em;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* --- 部门标题 --- */
+        .dept-title {
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            margin: 60px 0 30px 0;
+            color: #444;
+            font-size: 1.6em;
+            display: flex;
+            align-items: center;
+        }
+        
+        .dept-title::before {
+            content: ''; display: inline-block; width: 10px; height: 30px;
+            background: var(--primary-color); margin-right: 15px; border-radius: 4px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* --- 卡片样式 --- */
+        .case-card {
+            background: var(--card-bg);
+            border-radius: 12px; padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s ease; cursor: pointer;
+            border-left: 6px solid var(--primary-color);
+            display: flex; flex-direction: column; justify-content: space-between;
+            min-height: 180px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .case-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+        
+        .case-card h3 { margin: 0 0 10px 0; color: var(--primary-color); font-size: 1.25em; line-height: 1.3; }
+        .case-card p { color: #666; font-size: 0.9em; line-height: 1.5; margin-bottom: 15px; flex-grow: 1; }
+        .leader-text { font-size: 0.85em; color: #999; margin-bottom: 15px; font-style: italic; }
+        
+        .tags-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+        .tag { background: #e1efff; color: var(--primary-color); padding: 4px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 600; }
+
+        /* --- 弹窗样式 --- */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 1000;
+            justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.3s ease;
+            backdrop-filter: blur(3px);
+        }
+        .modal-active { display: flex; opacity: 1; }
+        
+        .modal-content {
+            background: #fff; width: 95%; max-width: 1000px;
+            border-radius: 16px; padding: 40px;
+            position: relative; max-height: 95vh; overflow-y: auto;
+            transform: translateY(30px); transition: transform 0.3s ease;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+        }
+        .modal-active .modal-content { transform: translateY(0); }
+
+        .close-btn {
+            position: absolute; top: 20px; right: 25px;
+            font-size: 30px; cursor: pointer; color: #999;
+            background: #fff; border-radius: 50%; width: 40px; height: 40px;
+            border: none; z-index: 10; line-height: 40px; text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .close-btn:hover { color: #333; background: #eee; }
+
+        /* --- 弹窗内容 --- */
+        .pdf-viewer {
+            width: 100%; height: 500px; border: 1px solid #ddd;
+            border-radius: 8px; margin-bottom: 20px; background: #f4f4f4;
+        }
+        .project-img-full {
+            width: 100%; height: auto; border-radius: 8px; margin-bottom: 20px;
+            border: 1px solid #eee; display: block;
+        }
+
+        .section-box { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .section-title { font-weight: 700; color: var(--primary-color); display: block; margin-bottom: 8px; text-transform: uppercase; font-size: 0.85em; letter-spacing: 1px; }
+        .kpi-row { display: flex; justify-content: space-around; margin-top: 10px; text-align: center; flex-wrap: wrap; gap: 20px; }
+        .kpi-item { flex: 1; min-width: 120px; }
+        .kpi-item strong { display: block; font-size: 1.6em; color: var(--primary-color); }
+        .kpi-item span { font-size: 0.9em; color: #666; display: block; margin-top: 5px; line-height: 1.2;}
+        .flow-text { font-family: monospace; color: #555; background: #fff; padding: 15px; border: 1px dashed #ccc; border-radius: 6px; display: block; width: 100%; box-sizing: border-box; font-size: 0.9em;}
+        .quote { font-style: italic; color: #555; border-left: 4px solid var(--primary-color); padding-left: 15px; margin: 20px 0; font-size: 1.1em; background: #fff; padding: 15px; border-radius: 0 8px 8px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <img src="WOW_Logo.png" alt="Chengdu Plant Logo" class="site-logo" onerror="this.style.display='none';">
+    <h1>Chengdu Plant Unattended Operation Success Menu</h1>
+    <div class="subtitle">Showcasing the Digital Transformation & Touchless Journey across Making, Packing, and QA.</div>
+</header>
+
+<div class="dashboard-container">
+    <div class="stat-card">
+        <span class="stat-value" id="total-cases-display">--</span>
+        <span class="stat-label">Total Success Cases</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">>$300M</span>
+        <span class="stat-label">Est. Value Creation</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">>50'000</span>
+        <span class="stat-label">Touches Eliminated/Yr</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">167'200 Hrs</span>
+        <span class="stat-label">Effort Elimination/Yr</span>
+    </div>
+</div>
+
+<div style="max-width: 1300px; margin: 0 auto;">
+    <h2 class="dept-title">Making Dept (MSG)</h2>
+    <div class="menu-grid" id="making-container"></div>
+</div>
+
+<div style="max-width: 1300px; margin: 0 auto;">
+    <h2 class="dept-title">Packing Dept (PSG)</h2>
+    <div class="menu-grid" id="packing-container"></div>
+</div>
+
+<div style="max-width: 1300px; margin: 0 auto;">
+    <h2 class="dept-title">QA Dept (QAC/QA)</h2>
+    <div class="menu-grid" id="qa-container"></div>
+</div>
+
+<div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+        <div id="modal-body-content"></div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 👇 1. 数据维护区 👇
+    // ==========================================
+    
+    const casesData = [
+        // --- ✨ NEW: Making CR System (Based on user request) ---
+        {
+            id: 401,
+            department: "making",
+            title: "Chengdu Making CR System (ThingWorx)",
+            leader: "Yang Jie",
+            tags: ["ThingWorx", "End-to-End", "Digitalization"],
+            shortDesc: "Full process digitalization: Feeding -> Manufacturing -> Quality -> Packing discharge via ThingWorx.",
+            // 🔴 使用上传的图片 image_f508c9.png
+            imgUrl: "image_f508c9.png", 
+            isImage: true, // 标记这是图片不是 PDF
+            background: "Previous systems (BFS, MUVS, Manual Control & Release) were siloed, leading to manual data transfers, lack of real-time visibility, and paper-based release delays.",
+            solution: "Digitized the entire process by integrating Control & Release, BFS (Buggy Filling Station), and MUVS (Material Utilization System) into a unified ThingWorx platform. Achieving seamless data flow from raw material unloading to finished powder discharge.",
+            processFlow: "RM Unloading (MUVS) ➔ Production (PLC) ➔ Quality Check ➔ Auto Release ➔ Buggy Filling (BFS) ➔ Discharge to Packing",
+            quote: "Touchless and Seamless Data Flow: From Material In to Powder Out.",
+            benefits: [
+                { value: "$100M", label: "Est. Value / Year" },
+                { value: "100%", label: "Data Integrity" },
+                { value: "Real-time", label: "Inventory Visibility" }
+            ]
+        },
+
+        // --- ✨ NEW: Packing CR System (Based on user request) ---
+        {
+            id: 402,
+            department: "packing",
+            title: "Chengdu Packing CR System (ThingWorx)",
+            leader: "Yang Jie",
+            tags: ["ThingWorx", "Stop Analysis", "Material Mgmt"],
+            shortDesc: "End-to-End digitalization of Packing Order stops management and Material flow.",
+            imgUrl: "", // 暂无图片，留空
+            isImage: false,
+            background: "Packing order management, stop reason analysis, and material tracking previously relied on manual paper logs and offline coordination, leading to delayed downtime analysis and inventory gaps.",
+            solution: "Replaced manual logs with ThingWorx-based CR system. Achieved auto-tracking of order status, digital material consumption tracking, and automated stop logic analysis.",
+            processFlow: "Order Download (SAP) ➔ Production Run ➔ Material Tracking ➔ Stop Logic Analysis ➔ Auto Order Close",
+            quote: "From manual logs to digital intelligence.",
+            benefits: [
+                { value: "$75M", label: "Est. Value / Year" },
+                { value: "90%", label: "Lead Time Reduced" },
+                { value: "100%", label: "Quality Compliance" }
+            ]
+        },
+
+        // --- Existing Making Cases ---
+        {
+            id: 101, 
+            department: "making", 
+            title: "PCC Pipeline Innovation Design",
+            leader: "Zhang Wengu (MSG)",
+            tags: ["PIG System", "Noise Reduction", "Efficiency"],
+            shortDesc: "Introduced Pigging system to eliminate noise hazard and reduce waste.",
+            imgUrl: "CD Touchless Nesletter-Making PCC Pipeline Innovation.pdf", 
+            isImage: false,
+            background: "4F PCC material discharge pipeline suffered from severe noise (110 dB) and high product waste during changeover.",
+            solution: "Implemented PIG (Pigging) system with internal pneumatic cylinder & bridge-breaking mechanism. Changed curved elbows to straight pipes.",
+            processFlow: "Production End ➔ Air Push Launch ➔ Pigging Run ➔ Product Recovery ➔ CIP Start",
+            quote: "Eliminate this noise source, fulfilling a long-standing desire... creating a WOW Workplace.",
+            benefits: [
+                { value: "80 #/mo", label: "Touch#" },
+                { value: "95%", label: "Air Saving" },
+                { value: "2M $/Y", label: "Value Creation" }
+            ]
+        },
+        {
+            id: 102,
+            department: "making",
+            title: "Unattended Operation in Ad-mix Area",
+            leader: "Connor Zhao (MSG)",
+            tags: ["Unattended", "PLC Upgrade", "Touch Elimination"],
+            shortDesc: "Enabled 4Hrs unattended in Admix area via automation & IIC check elimination.",
+            imgUrl: "CD Touchless Nesletter-Making Unattended Operation in Ad-mix.pdf",
+            isImage: false,
+            background: "Admix preparation involved manual dumping, valve operation, and supervision, creating dust and high workload.",
+            solution: "PLC & Controller Upgrade, E-checklist for IIC, Auto Perfume Purge, One-click Sequential Shutdown.",
+            processFlow: "Big Bag Station ➔ Buffer Hopper ➔ Auto Dosing ➔ Mixer (One-click Shutdown)",
+            quote: "Data Flow to Break Physical Boundary.",
+            benefits: [
+                { value: "1 FTE", label: "Headcount" },
+                { value: "60 #/day", label: "Touch Reduction" },
+                { value: "40 M$/Y", label: "Value Creation" }
+            ]
+        },
+        {
+            id: 103,
+            department: "making",
+            title: "Auto Making Material Cycle Counting",
+            leader: "Connor Zhao (MSG)",
+            tags: ["RPA", "UiBot", "Digital Worker"],
+            shortDesc: "RPA Digital Worker simulates SAP key user actions for material counting.",
+            imgUrl: "CD Touchless Nesletter-PSG Auto PM counting.pdf", 
+            isImage: false,
+            background: "SAP Key User manually processed 60+ materials across 3 systems (ILS, Excel, SAP), taking 2-3 hours.",
+            solution: "Developed RPA Digital Worker (CyberZ) to simulate ILS export, Excel preprocess, and SAP balance adjusting loop.",
+            processFlow: "Start ➔ ILS Data Export ➔ Preprocess to Excel ➔ SAP Login ➔ Balance Adjust Loop ➔ Report",
+            quote: "Start, then you may drink coffee. Await RPA to send you report.",
+            benefits: [
+                { value: "140 #/mo", label: "Touch#" },
+                { value: "180 mins", label: "Saved / Month" },
+                { value: "2 Hours", label: "Time Saved" }
+            ]
+        },
+        {
+            id: 104,
+            department: "making",
+            title: "Auto PO GR & Location Transfer RPA",
+            leader: "Connor Zhao (MSG)",
+            tags: ["RPA", "Logistics", "SAP"],
+            shortDesc: "RPA Worker for Auto PO GR, reducing 60 daily touches.",
+            imgUrl: "CD Touchless Nesletter-MSG Auto GR.pdf",
+            isImage: false,
+            background: "PO confirm is repetitive (60 daily touches). Operator gathers info from separate systems and calculates order quantity manually.",
+            solution: "UiBot RPA: Auto PO Scanning -> Quantity Calculation -> Auto GR & Location Transfer -> Status Check.",
+            processFlow: "Auto PO Scanning ➔ Quantity Calculation ➔ Auto GR & Transfer ➔ Status Check",
+            quote: "I help to drive operation excellence. 100% Touchless.",
+            benefits: [
+                { value: "60 #/day", label: "Touch# Reduc" },
+                { value: "60 mins", label: "Effort / Day" },
+                { value: "100%", label: "GR Accuracy" }
+            ]
+        },
+        {
+            id: 105,
+            department: "making",
+            title: "Smart Dosing System (End-to-End)",
+            leader: "Tong Dingxiang (MSG)",
+            tags: ["Smart Dosing", "Material Handling", "Unattended"],
+            shortDesc: "Switch from small bags to bulk sacks with direct feeding system.",
+            imgUrl: "CD Touchless Nesletter-MSG Smartdosing.pdf",
+            isImage: false,
+            background: "Handling Minors was high-touch. Small bags -> manual unload -> pre-mixing -> manual feed.",
+            solution: "Switch to bulk sacks + Direct feeding in 6F. Eliminated 4F pre-staging phase entirely.",
+            processFlow: "Bulk Sacks ➔ Direct Feeding in 6F ➔ 4Hrs Unattended in MSG 4F",
+            quote: "Streamlined 'Unattended' Direct Feed System.",
+            benefits: [
+                { value: "247 #/day", label: "Touch#" },
+                { value: "710 mins", label: "Effort / Day" },
+                { value: "4 Hrs", label: "Unattended" }
+            ]
+        },
+
+        // --- Packing Cases ---
+        {
+            id: 201, 
+            department: "packing", 
+            title: "Automatic Forming Tube Lifting Device",
+            leader: "Li Wenzhu / Kuang Li (PSG)",
+            tags: ["Safety", "Automation", "EHS"],
+            shortDesc: "Auto lifting device for heavy forming tubes (50-90kg) to improve safety.",
+            imgUrl: "CD Touchless Nesletter-Automatic Forming Tube Lifting Device.pdf", 
+            isImage: false,
+            background: "Changing forming tube is high safety risk (heavy lifting) and takes 20% touch effort during RCO.",
+            solution: "Designed Automatic Forming Tube Lifting Device. Improved sliding rails and established SWP.",
+            processFlow: "Manual Unlatch ➔ Auto Lift ➔ Swap Tube ➔ Auto Lower ➔ Lock",
+            quote: "Safety First. High-B2-Low Safety Risk.",
+            benefits: [
+                { value: "200 #/yr", label: "Touch#" },
+                { value: "400 min", label: "Effort / Year" },
+                { value: "Reduced", label: "Safety Risk" }
+            ]
+        },
+        {
+            id: 202,
+            department: "packing",
+            title: "Laser Printer Upgrade Project",
+            leader: "Zhang Long (PSG)",
+            tags: ["Maintenance Free", "Quality", "Cost Saving"],
+            shortDesc: "Replace Inkjet with Laser Printer to eliminate consumables and rework.",
+            imgUrl: "CD Touchless Nesletter-CD PSG laser printer upgrade.pdf",
+            isImage: false,
+            background: "Inkjet printers unstable, high failure rate, expensive consumables, not eco-friendly.",
+            solution: "Partnered with FIT Laser/Linshi to replace with Laser Coding. No consumables, no hazardous waste.",
+            processFlow: "Equipment Replacement: Inkjet ➔ Laser",
+            quote: "No hazardous waste, environmental protection.",
+            benefits: [
+                { value: "5066 #/yr", label: "Touch#" },
+                { value: "1584 min", label: "Effort / Mo" },
+                { value: "17.5 $M", label: "MOE&MU" }
+            ]
+        },
+        {
+            id: 203,
+            department: "packing",
+            title: "TAMU Inspection Touch Reduction",
+            leader: "Li Wenzhu (PSG)",
+            tags: ["Quality", "Touchless", "Automation"],
+            shortDesc: "Risk-based TAMU and automation to reduce inspection touches.",
+            imgUrl: "CD Touchless Nesletter-TAMU Inspection Touch Reduction.pdf",
+            isImage: false,
+            background: "TAMU check touch # 1012 times/day with 3160 min/day effort. Manual adjust and record.",
+            solution: "Automation (Vision/2D), Risk-based TAMU frequency, Auto-adjustment, Centralized CR system.",
+            processFlow: "Manual Record ➔ Auto Inspection (Vision) ➔ Auto Adjustment ➔ Digital Release",
+            quote: "Quality superiority is delivered along the way.",
+            benefits: [
+                { value: "330 #/day", label: "Touch# Elim" },
+                { value: "1473 min", label: "Effort / Day" },
+                { value: "ZERO", label: "Complaint" }
+            ]
+        },
+        {
+            id: 204,
+            department: "packing",
+            title: "PKG TAMU Delay Auto Alarm",
+            leader: "Zeng Zhengyuan (PSG)",
+            tags: ["Alarm System", "Interlock", "Digital"],
+            shortDesc: "Auto alarm system to prevent missed TAMU checks and machine stops.",
+            imgUrl: "CD Touhless Nesletter-TAMU Delay auto alarm.pdf",
+            isImage: false,
+            background: "If TAMU inspection miss the timeline, packing machine stops. Requires manual intervention.",
+            solution: "CR system monitors task. PLC triggers alarm 5 mins before due time. Auto turns off when done.",
+            processFlow: "Monitor Task ➔ Check Time ➔ Trigger Alarm (if delay) ➔ Operator Action ➔ Reset",
+            quote: "This helps to eliminate redundant touches.",
+            benefits: [
+                { value: "200 #/mo", label: "Touch#" },
+                { value: "200 mins", label: "Effort / Mo" },
+                { value: "90%", label: "Stop Elim" }
+            ]
+        },
+        {
+            id: 205,
+            department: "packing",
+            title: "Film Loss Reduction by Digitalization",
+            leader: "Fan Zhiheng (PSG)",
+            tags: ["Cost Saving", "PLC Logic", "Sustainability"],
+            shortDesc: "PLC logic optimizes film usage during changeover, saving 5m film per C/O.",
+            imgUrl: "CD Touchless Newsletter-Optimization of switching the Film.pdf",
+            isImage: false,
+            background: "Top planned loss is film loss during changeover (20-30 bags scrapped).",
+            solution: "PLC logic calculates remaining bags capacity, stops machine exactly when film/powder ends.",
+            processFlow: "Low Level Trigger ➔ Calc Remaining ➔ Stop ➔ Change Film ➔ Restart ➔ Stop at Limit",
+            quote: "Enable film loss reduction without quality risk.",
+            benefits: [
+                { value: "600 #/Mo", label: "Touch#" },
+                { value: "300 min", label: "Effort / Mo" },
+                { value: "1.3 $M/yr", label: "PM Loss Reduc" }
+            ]
+        },
+        {
+            id: 206,
+            department: "packing",
+            title: "PKG Auto PO Confirm via RPA",
+            leader: "Li Wenzhu (PSG)",
+            tags: ["RPA", "SAP", "Zero Touch"],
+            shortDesc: "UiBot worker automatically closes Production Orders in SAP.",
+            imgUrl: "CD Touhless Nesletter-PKG Auto PO Closure.pdf",
+            isImage: false,
+            background: "Manual close PO in SAP with many touches and mistakes. Missed MPSA tracking.",
+            solution: "UiBot scans PO every 15 mins. Checks quantity & time. Auto fills SAP closing screen.",
+            processFlow: "Scan PO ➔ Check Condition ➔ Get Data ➔ Close PO in SAP ➔ Log",
+            quote: "Achieve 0 touch on PO confirming.",
+            benefits: [
+                { value: "800 #/mo", label: "Touch#" },
+                { value: "3000 mins", label: "Effort / Mo" },
+                { value: "0", label: "Miss on MPSA" }
+            ]
+        },
+
+        // --- QA Cases ---
+        {
+            id: 301,
+            department: "qa",
+            title: "Digital Inspection for ITM Pest Control",
+            leader: "Liu Xiaoyan & Qiao Haiyan (QAC)",
+            tags: ["Digitalization", "Power BI", "Paperless"],
+            shortDesc: "Digitized 24 categories of paper records using Forms & Power BI.",
+            imgUrl: "CD Touhless Nesletter-Digital Inspection for ITM Pest Control.pdf",
+            isImage: false,
+            background: "24 paper-based documents for ITM/pest control. 20 hours/month to collect records.",
+            solution: "Digitize via Forms, Power Automate, SharePoint, Power BI. Real-time tracking.",
+            processFlow: "Scan QR ➔ Fill Form ➔ Power Automate ➔ SharePoint ➔ Power BI Dashboard",
+            quote: "Digitize, visualize, track in real-time.",
+            benefits: [
+                { value: "5 M$/year", label: "Cost Reduc" },
+                { value: "46 hours", label: "Effort / Mo" },
+                { value: "0", label: "Paper Record" }
+            ]
+        },
+        {
+            id: 302,
+            department: "qa",
+            title: "GC DL One Touch Packing Material Release",
+            leader: "Xu Hongqing (QA)",
+            tags: ["Supply Chain", "Collaboration", "Efficiency"],
+            shortDesc: "Synergize GC DL plant Lab data to achieve one touch PM release.",
+            imgUrl: "CD Touhless Nesletter-GC one touch packing material release.pdf",
+            isImage: false,
+            background: "Packing material inspection required for first delivery at every single plant (redundant work).",
+            solution: "Integrated all GC DL plant Lab data via Cloud. One plant tests, others 'Receive & Go'.",
+            processFlow: "Supplier ➔ Any Plant Test ➔ Data Shared ➔ Other Plants Receive & Go",
+            quote: "Break the traditional boundary.",
+            benefits: [
+                { value: "1980 #/yr", label: "Touch#" },
+                { value: "380 hours", label: "Effort / Year" },
+                { value: "85% ↓", label: "Release Time" }
+            ]
+        },
+        {
+            id: 303,
+            department: "qa",
+            title: "GC DL Touchless Quality via GSQA",
+            leader: "Xu Hongqing (QA)",
+            tags: ["GSQA", "e-CoA", "Sustainability"],
+            shortDesc: "Adopt GSQA for RM/PM to automate release process.",
+            imgUrl: "CD Touhless Nesletter-GSQA.pdf",
+            isImage: false,
+            background: "RM inspection is top remaining touch. Manual CoA check takes 10 min/lot.",
+            solution: "Supplier uploads e-CoA ➔ GSQA auto judgement ➔ SAP Auto Release.",
+            processFlow: "Supplier Upload e-CoA ➔ GSQA Auto Judge ➔ SAP Auto Release",
+            quote: "Standardize and simplify the process.",
+            benefits: [
+                { value: "22000 #/yr", label: "Touch#" },
+                { value: "3700 hours", label: "Effort / Year" },
+                { value: "44000", label: "Papers Saved" }
+            ]
+        }
+    ];
+
+    // ==========================================
+    // 👇 2. 逻辑引擎区 👇
+    // ==========================================
+
+    const makingContainer = document.getElementById('making-container');
+    const packingContainer = document.getElementById('packing-container');
+    const qaContainer = document.getElementById('qa-container');
+    const overlay = document.getElementById('modal-overlay');
+    const modalBody = document.getElementById('modal-body-content');
+
+    // 自动计算 Total Cases
+    document.getElementById('total-cases-display').innerText = casesData.length;
+
+    function createCardHTML(item) {
+        return `
+            <div class="case-card" onclick="openModal(${item.id})">
+                <div>
+                    <h3>${item.title}</h3>
+                    <div class="leader-text">Leader: ${item.leader}</div>
+                    <p>${item.shortDesc}</p>
+                </div>
+                <div class="tags-container">
+                    ${item.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function init() {
+        makingContainer.innerHTML = '';
+        packingContainer.innerHTML = '';
+        qaContainer.innerHTML = '';
+
+        casesData.forEach(item => {
+            const cardHTML = createCardHTML(item);
+            const dept = item.department.toLowerCase();
+            
+            if (dept === 'making') {
+                makingContainer.innerHTML += cardHTML;
+            } else if (dept === 'packing') {
+                packingContainer.innerHTML += cardHTML;
+            } else if (dept.includes('qa')) {
+                qaContainer.innerHTML += cardHTML;
+            }
+        });
+    }
+
+    function openModal(id) {
+        const data = casesData.find(c => c.id === id);
+        if (!data) return;
+
+        const kpiHtml = data.benefits.map(b => `
+            <div class="kpi-item">
+                <strong>${b.value}</strong>
+                <span>${b.label}</span>
+            </div>
+        `).join('');
+
+        // 判断是显示图片还是 PDF
+        let viewerHtml = '';
+        if (data.imgUrl) {
+            if (data.isImage) {
+                viewerHtml = `<img src="${data.imgUrl}" class="project-img-full" alt="${data.title}">`;
+            } else {
+                viewerHtml = `<iframe src="${data.imgUrl}" class="pdf-viewer" title="${data.title} PDF"></iframe>
+                              <div style="text-align:center; margin-bottom:20px; font-size:0.8em; color:#999;">
+                                (Scroll to view full PDF)
+                              </div>`;
+            }
+        }
+
+        modalBody.innerHTML = `
+            <h2 style="color: var(--primary-color); margin-top:0;">${data.title}</h2>
+            <p style="color: #666; margin-bottom: 20px;">Project Leader: ${data.leader}</p>
+
+            ${viewerHtml}
+
+            <div class="section-box">
+                <span class="section-title">🛑 Background (背景)</span>
+                <p style="margin:0">${data.background}</p>
+            </div>
+
+            <div class="section-box">
+                <span class="section-title">💡 Solution (方案)</span>
+                <p style="margin:0">${data.solution}</p>
+            </div>
+            
+            <div style="margin-bottom:20px;">
+                 <span class="section-title">⚙️ Process Flow</span>
+                 <div class="flow-text">${data.processFlow}</div>
+            </div>
+
+            <div class="quote">"${data.quote}"</div>
+
+            <div class="section-box" style="background: #eef6ff;">
+                <span class="section-title">🚀 Key Benefits (收益)</span>
+                <div class="kpi-row">
+                    ${kpiHtml}
+                </div>
+            </div>
+        `;
+
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.classList.add('modal-active'), 10);
+    }
+
+    function closeModal() {
+        overlay.classList.remove('modal-active');
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
+
+    init();
+</script>
+</body>
+</html>
